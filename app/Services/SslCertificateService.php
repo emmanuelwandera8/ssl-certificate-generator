@@ -28,6 +28,7 @@ class SslCertificateService
             'key_size' => 2048,
             'digest_alg' => 'sha256',
             'x509_extensions' => 'v3_ca',
+            'private_key_password' => null,
         ];
 
         $config = array_merge($defaultConfig, $config);
@@ -123,8 +124,9 @@ class SslCertificateService
         $commonName = Str::slug($config['common_name']);
         $basePath = "ssl_certificates/{$commonName}_{$timestamp}";
 
-        // Export private key
-        openssl_pkey_export($privateKey, $privateKeyPem);
+        // Export private key with optional password protection
+        $passphrase = $config['private_key_password'] ?? null;
+        openssl_pkey_export($privateKey, $privateKeyPem, $passphrase);
         $privateKeyPath = "{$basePath}/private.key";
         Storage::put($privateKeyPath, $privateKeyPem);
 
@@ -141,7 +143,8 @@ class SslCertificateService
         // Create PFX/P12 file
         $pfxPath = "{$basePath}/certificate.pfx";
         $pfxContent = '';
-        openssl_pkcs12_export($certificate, $pfxContent, $privateKey, $config['common_name']);
+        // Use the correct function signature for PHP 8+
+        openssl_pkcs12_export($certificate, $pfxContent, $privateKey, $passphrase ?: '', ['friendly_name' => $config['common_name']]);
         Storage::put($pfxPath, $pfxContent);
 
         return [

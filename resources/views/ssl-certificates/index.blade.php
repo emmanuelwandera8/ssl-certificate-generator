@@ -126,6 +126,17 @@
                         </select>
                     </div>
 
+                    <!-- Private Key Password -->
+                    <div>
+                        <label for="private_key_password" class="block text-sm font-medium text-gray-700 mb-1">
+                            Private Key Password (Optional)
+                        </label>
+                        <input type="password" id="private_key_password" x-model="form.private_key_password"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Leave empty for no password protection">
+                        <p class="text-xs text-gray-500 mt-1">Password to encrypt the private key file</p>
+                    </div>
+
                     <!-- Submit Button -->
                     <button type="submit" :disabled="loading"
                             class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -283,7 +294,8 @@
                     locality: 'City',
                     email: 'admin@example.com',
                     valid_days: 365,
-                    key_size: 2048
+                    key_size: 2048,
+                    private_key_password: ''
                 },
                 certificates: [],
                 loading: false,
@@ -319,7 +331,8 @@
                                 locality: 'City',
                                 email: 'admin@example.com',
                                 valid_days: 365,
-                                key_size: 2048
+                                key_size: 2048,
+                                private_key_password: ''
                             };
                             
                             // Reload certificates

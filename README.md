@@ -139,7 +139,8 @@ php artisan ssl:generate \
     --locality=San Francisco \
     --email=admin@example.com \
     --valid-days=365 \
-    --key-size=2048
+    --key-size=2048 \
+    --private-key-password="securepassword123"
 ```
 
 #### Quick Generation
@@ -174,6 +175,7 @@ The application provides RESTful API endpoints for programmatic access:
 - **Organizational Unit (OU)**: Department or unit within the organization
 - **Validity Period**: Number of days the certificate is valid (1-3650)
 - **Key Size**: RSA key size in bits (1024, 2048, or 4096)
+- **Private Key Password**: Password to encrypt the private key file (recommended for security)
 
 ## Generated Files
 
@@ -202,9 +204,10 @@ storage/app/ssl_certificates/
 ⚠️ **Important Security Notes:**
 
 1. **Private Key Security**: Never share or expose your private key files
-2. **Self-Signed Certificates**: These certificates are not trusted by browsers by default
-3. **Development Use**: Intended for development and testing environments only
-4. **Production**: Use certificates from trusted Certificate Authorities for production
+2. **Password Protection**: Always use a strong password to encrypt private keys
+3. **Self-Signed Certificates**: These certificates are not trusted by browsers by default
+4. **Development Use**: Intended for development and testing environments only
+5. **Production**: Use certificates from trusted Certificate Authorities for production
 
 ## Browser Trust
 

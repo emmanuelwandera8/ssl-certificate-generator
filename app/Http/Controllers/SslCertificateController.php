@@ -42,6 +42,7 @@ class SslCertificateController extends Controller
             'email' => 'required|email|max:255',
             'valid_days' => 'required|integer|min:1|max:3650',
             'key_size' => 'required|in:1024,2048,4096',
+            'private_key_password' => 'nullable|string|max:255',
         ]);
 
         // Validate configuration

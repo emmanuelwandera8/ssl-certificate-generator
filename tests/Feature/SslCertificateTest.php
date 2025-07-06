@@ -30,6 +30,7 @@ class SslCertificateTest extends TestCase
             'email' => 'test@example.com',
             'valid_days' => 365,
             'key_size' => 2048,
+            'private_key_password' => 'testpassword123',
         ];
 
         $result = $this->sslService->generateSelfSignedCertificate($config);
@@ -90,6 +91,7 @@ class SslCertificateTest extends TestCase
             'email' => 'test@example.com',
             'valid_days' => 365,
             'key_size' => 2048,
+            'private_key_password' => 'testpassword123',
         ];
 
         $result = $this->sslService->generateSelfSignedCertificate($config);
@@ -155,6 +157,7 @@ class SslCertificateTest extends TestCase
             'email' => 'test@example.com',
             'valid_days' => 365,
             'key_size' => 2048,
+            'private_key_password' => 'testpassword123',
         ];
 
         $result = $this->sslService->generateSelfSignedCertificate($config);
@@ -184,6 +187,7 @@ class SslCertificateTest extends TestCase
             'email' => 'test@example.com',
             'valid_days' => 365,
             'key_size' => 2048,
+            'private_key_password' => 'testpassword123',
         ]);
 
         $response->assertStatus(200);
@@ -222,5 +226,58 @@ class SslCertificateTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('ssl-certificates.index');
+    }
+
+    public function test_can_generate_password_protected_certificate()
+    {
+        $config = [
+            'common_name' => 'test.example.com',
+            'organization' => 'Test Organization',
+            'organizational_unit' => 'IT Department',
+            'country' => 'US',
+            'state' => 'Test State',
+            'locality' => 'Test City',
+            'email' => 'test@example.com',
+            'valid_days' => 365,
+            'key_size' => 2048,
+            'private_key_password' => 'securepassword123',
+        ];
+
+        $result = $this->sslService->generateSelfSignedCertificate($config);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals($config, $result['config']);
+        
+        // Check if files were created
+        $this->assertTrue(Storage::exists($result['files']['private_key']['path']));
+        $this->assertTrue(Storage::exists($result['files']['certificate']['path']));
+        
+        // Verify private key is password protected
+        $privateKeyContent = Storage::get($result['files']['private_key']['path']);
+        $this->assertStringContainsString('ENCRYPTED', $privateKeyContent);
+    }
+
+    public function test_can_generate_certificate_without_password()
+    {
+        $config = [
+            'common_name' => 'test.example.com',
+            'organization' => 'Test Organization',
+            'organizational_unit' => 'IT Department',
+            'country' => 'US',
+            'state' => 'Test State',
+            'locality' => 'Test City',
+            'email' => 'test@example.com',
+            'valid_days' => 365,
+            'key_size' => 2048,
+            'private_key_password' => null,
+        ];
+
+        $result = $this->sslService->generateSelfSignedCertificate($config);
+
+        $this->assertTrue($result['success']);
+        
+        // Verify private key is not password protected
+        $privateKeyContent = Storage::get($result['files']['private_key']['path']);
+        $this->assertStringNotContainsString('ENCRYPTED', $privateKeyContent);
     }
 } 

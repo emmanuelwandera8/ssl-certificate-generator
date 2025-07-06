@@ -21,6 +21,7 @@ class GenerateSslCertificate extends Command
                             {--email= : Email address}
                             {--valid-days=365 : Validity period in days}
                             {--key-size=2048 : Key size in bits}
+                            {--private-key-password= : Password to encrypt private key}
                             {--interactive : Run in interactive mode}';
 
     /**
@@ -82,6 +83,7 @@ class GenerateSslCertificate extends Command
             'email' => $this->option('email') ?: 'admin@example.com',
             'valid_days' => (int) $this->option('valid-days'),
             'key_size' => (int) $this->option('key-size'),
+            'private_key_password' => $this->option('private-key-password'),
         ];
     }
 
@@ -104,6 +106,7 @@ class GenerateSslCertificate extends Command
             'email' => $this->ask('Email Address', 'admin@example.com'),
             'valid_days' => (int) $this->ask('Validity Period (days)', '365'),
             'key_size' => (int) $this->choice('Key Size', ['1024', '2048', '4096'], '2048'),
+            'private_key_password' => $this->secret('Private Key Password (optional, press Enter to skip)'),
         ];
     }
 
