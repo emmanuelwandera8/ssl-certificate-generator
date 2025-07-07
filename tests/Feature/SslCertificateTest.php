@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\SslCertificateService;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -10,12 +11,14 @@ use Tests\TestCase;
 class SslCertificateTest extends TestCase
 {
     protected SslCertificateService $sslService;
+    protected User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->sslService = app(SslCertificateService::class);
         Storage::fake('local');
+        $this->user = User::factory()->create();
     }
 
     public function test_can_generate_ssl_certificate()
@@ -33,7 +36,7 @@ class SslCertificateTest extends TestCase
             'private_key_password' => 'testpassword123',
         ];
 
-        $result = $this->sslService->generateSelfSignedCertificate($config);
+        $result = $this->sslService->generateSelfSignedCertificate($config, $this->user->id);
 
         $this->assertTrue($result['success']);
         $this->assertEquals($config, $result['config']);
@@ -94,7 +97,7 @@ class SslCertificateTest extends TestCase
             'private_key_password' => 'testpassword123',
         ];
 
-        $result = $this->sslService->generateSelfSignedCertificate($config);
+        $result = $this->sslService->generateSelfSignedCertificate($config, $this->user->id);
         $certificatePath = $result['files']['certificate']['path'];
 
         // Get certificate info
@@ -135,10 +138,10 @@ class SslCertificateTest extends TestCase
         ];
 
         foreach ($configs as $config) {
-            $this->sslService->generateSelfSignedCertificate($config);
+            $this->sslService->generateSelfSignedCertificate($config, $this->user->id);
         }
 
-        $certificates = $this->sslService->listCertificates();
+        $certificates = $this->sslService->listCertificates($this->user->id);
 
         $this->assertCount(2, $certificates);
         $this->assertEquals('test2.example.com', $certificates[0]['info']['subject']['CN']);
@@ -160,7 +163,7 @@ class SslCertificateTest extends TestCase
             'private_key_password' => 'testpassword123',
         ];
 
-        $result = $this->sslService->generateSelfSignedCertificate($config);
+        $result = $this->sslService->generateSelfSignedCertificate($config, $this->user->id);
         $directory = $result['files']['base_path'];
 
         // Verify files exist
@@ -177,7 +180,7 @@ class SslCertificateTest extends TestCase
 
     public function test_web_interface_can_generate_certificate()
     {
-        $response = $this->post('/ssl-certificates/generate', [
+        $response = $this->actingAs($this->user)->post('/ssl-certificates/generate', [
             'common_name' => 'test.example.com',
             'organization' => 'Test Organization',
             'organizational_unit' => 'IT Department',
@@ -210,7 +213,7 @@ class SslCertificateTest extends TestCase
 
     public function test_web_interface_validates_input()
     {
-        $response = $this->post('/ssl-certificates/generate', [
+        $response = $this->actingAs($this->user)->post('/ssl-certificates/generate', [
             'common_name' => '',
             'country' => 'USA', // Invalid: should be 2 letters
             'email' => 'invalid-email',
@@ -222,7 +225,7 @@ class SslCertificateTest extends TestCase
 
     public function test_can_access_ssl_certificates_page()
     {
-        $response = $this->get('/ssl-certificates');
+        $response = $this->actingAs($this->user)->get('/ssl-certificates');
 
         $response->assertStatus(200);
         $response->assertViewIs('ssl-certificates.index');
@@ -243,7 +246,7 @@ class SslCertificateTest extends TestCase
             'private_key_password' => 'securepassword123',
         ];
 
-        $result = $this->sslService->generateSelfSignedCertificate($config);
+        $result = $this->sslService->generateSelfSignedCertificate($config, $this->user->id);
 
         $this->assertTrue($result['success']);
         $this->assertEquals($config, $result['config']);
@@ -272,12 +275,47 @@ class SslCertificateTest extends TestCase
             'private_key_password' => null,
         ];
 
-        $result = $this->sslService->generateSelfSignedCertificate($config);
+        $result = $this->sslService->generateSelfSignedCertificate($config, $this->user->id);
 
         $this->assertTrue($result['success']);
         
         // Verify private key is not password protected
         $privateKeyContent = Storage::get($result['files']['private_key']['path']);
         $this->assertStringNotContainsString('ENCRYPTED', $privateKeyContent);
+    }
+
+    public function test_users_can_only_see_their_own_certificates()
+    {
+        // Create another user
+        $otherUser = User::factory()->create();
+        
+        // Generate certificates for both users
+        $config = [
+            'common_name' => 'test.example.com',
+            'organization' => 'Test Organization',
+            'country' => 'US',
+            'state' => 'Test State',
+            'locality' => 'Test City',
+            'email' => 'test@example.com',
+            'valid_days' => 365,
+            'key_size' => 2048,
+        ];
+        
+        $this->sslService->generateSelfSignedCertificate($config, $this->user->id);
+        $this->sslService->generateSelfSignedCertificate($config, $otherUser->id);
+        
+        // Check that current user only sees their certificates
+        $userCertificates = $this->sslService->listCertificates($this->user->id);
+        $otherUserCertificates = $this->sslService->listCertificates($otherUser->id);
+        
+        $this->assertCount(1, $userCertificates);
+        $this->assertCount(1, $otherUserCertificates);
+        $this->assertNotEquals($userCertificates, $otherUserCertificates);
+    }
+
+    public function test_unauthenticated_users_cannot_access_ssl_page()
+    {
+        $response = $this->get('/ssl-certificates');
+        $response->assertRedirect('/login');
     }
 } 

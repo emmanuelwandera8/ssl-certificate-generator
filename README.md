@@ -62,199 +62,253 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 # SSL Certificate Generator
 
-A Laravel application for generating self-signed SSL certificates for development and testing purposes.
+A Laravel-based SSL certificate generation service with Flutterwave payment integration. Users can sign up, purchase SSL certificates with different validity periods, and download them in multiple formats.
 
 ## Features
 
-- 🛡️ Generate self-signed SSL certificates with customizable parameters
-- 🌐 Web-based interface with modern UI
-- 💻 Command-line interface for automation
-- 📁 Multiple certificate formats (PEM, PFX/P12, Combined)
-- 🔍 Certificate validation and information display
-- 📊 Certificate management and listing
-- 🗑️ Certificate deletion functionality
+- **User Authentication**: Laravel Breeze authentication system
+- **SSL Certificate Generation**: Self-signed certificates with configurable validity periods
+- **Payment Integration**: Flutterwave payment gateway for secure transactions
+- **Multiple Formats**: PEM, PFX/P12, and combined certificate formats
+- **Password Protection**: Optional private key password protection
+- **User Dashboard**: Manage and download certificates
+- **Responsive Design**: Modern UI with Tailwind CSS and Alpine.js
+
+## Pricing Plans
+
+- **1 Month**: $5 - Perfect for testing and development
+- **6 Months**: $25 - Most popular for small projects
+- **1 Year**: $45 - Best value for production websites
+- **2 Years**: $80 - Long-term security for established sites
+- **5 Years**: $200 - Maximum security for enterprise
+- **Custom**: Contact us for custom durations and bulk pricing
 
 ## Requirements
 
-- PHP 8.2 or higher
-- Laravel 12.0 or higher
-- OpenSSL extension enabled
+- PHP 8.1 or higher
+- Laravel 10.x
+- MySQL/PostgreSQL database
+- Composer
+- Node.js and NPM (for frontend assets)
 
 ## Installation
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd ssl-certificate-generator
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd ssl-certificate-generator
+   ```
 
-2. Install dependencies:
-```bash
-composer install
-```
+2. **Install PHP dependencies**
+   ```bash
+   composer install
+   ```
 
-3. Copy environment file:
-```bash
-cp .env.example .env
-```
+3. **Install Node.js dependencies**
+   ```bash
+   npm install
+   ```
 
-4. Generate application key:
-```bash
-php artisan key:generate
-```
+4. **Copy environment file**
+   ```bash
+   cp .env.example .env
+   ```
 
-5. Run migrations (if using database features):
-```bash
-php artisan migrate
-```
+5. **Generate application key**
+   ```bash
+   php artisan key:generate
+   ```
 
-6. Start the development server:
-```bash
-php artisan serve
-```
+6. **Configure database**
+   Edit `.env` file with your database credentials:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=ssl_certificate_generator
+   DB_USERNAME=your_username
+   DB_PASSWORD=your_password
+   ```
+
+7. **Run database migrations**
+   ```bash
+   php artisan migrate
+   ```
+
+8. **Configure Flutterwave**
+   Add your Flutterwave credentials to `.env`:
+   ```env
+   FLUTTERWAVE_PUBLIC_KEY=your_public_key
+   FLUTTERWAVE_SECRET_KEY=your_secret_key
+   FLUTTERWAVE_SECRET_HASH=your_secret_hash
+   FLUTTERWAVE_URL=https://api.flutterwave.com/v3
+   FLUTTERWAVE_ENVIRONMENT=test
+   ```
+
+9. **Build frontend assets**
+   ```bash
+   npm run build
+   ```
+
+10. **Set up storage**
+    ```bash
+    php artisan storage:link
+    ```
+
+## Flutterwave Setup
+
+1. **Create Flutterwave Account**
+   - Sign up at [Flutterwave](https://flutterwave.com)
+   - Complete account verification
+
+2. **Get API Keys**
+   - Go to your Flutterwave dashboard
+   - Navigate to Settings > API Keys
+   - Copy your public key, secret key, and secret hash
+
+3. **Configure Webhook**
+   - Set webhook URL: `https://yourdomain.com/payment/webhook`
+   - Use the secret hash for webhook verification
+
+4. **Test Mode**
+   - Use test credentials for development
+   - Switch to live credentials for production
 
 ## Usage
 
-### Web Interface
+### For Users
 
-1. Navigate to `http://localhost:8000` in your browser
-2. Fill out the certificate configuration form
-3. Click "Generate Certificate"
-4. Download the generated certificate files
+1. **Sign Up/Login**
+   - Visit the homepage and click "Sign Up"
+   - Complete registration process
 
-### Command Line Interface
+2. **Purchase Certificate**
+   - Go to Pricing page
+   - Select desired validity period
+   - Fill in certificate details
+   - Complete payment via Flutterwave
 
-#### Interactive Mode
+3. **Download Certificate**
+   - After successful payment, certificate is generated automatically
+   - Download in PEM, PFX, or combined format
+   - Private key is password-protected if specified
+
+### For Administrators
+
+1. **Monitor Payments**
+   - Check Laravel logs for payment webhooks
+   - Monitor Flutterwave dashboard for transactions
+
+2. **Manage Certificates**
+   - Certificates are stored in `storage/app/ssl_certificates/`
+   - Organized by user ID and timestamp
+
+3. **Support**
+   - Contact form submissions are logged
+   - Check `storage/logs/laravel.log` for details
+
+## File Structure
+
+```
+ssl-certificate-generator/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── SslCertificateController.php
+│   │   ├── PaymentController.php
+│   │   └── ContactController.php
+│   ├── Services/
+│   │   └── SslCertificateService.php
+│   └── Models/
+│       └── User.php
+├── resources/views/
+│   ├── welcome.blade.php
+│   ├── pricing.blade.php
+│   ├── contact.blade.php
+│   └── ssl-certificates/
+│       └── index.blade.php
+├── routes/
+│   └── web.php
+└── config/
+    └── services.php
+```
+
+## Security Features
+
+- **CSRF Protection**: All forms protected against CSRF attacks
+- **Authentication Required**: SSL certificate generation requires login
+- **User Isolation**: Users can only access their own certificates
+- **Password Protection**: Optional private key encryption
+- **Secure Storage**: Certificates stored in private storage directory
+- **Payment Verification**: Server-side payment verification with Flutterwave
+
+## API Endpoints
+
+### Public Routes
+- `GET /` - Landing page
+- `GET /pricing` - Pricing page
+- `GET /contact` - Contact page
+- `POST /contact` - Submit contact form
+
+### Authenticated Routes
+- `GET /dashboard` - User dashboard
+- `GET /ssl-certificates` - Certificate management
+- `POST /ssl-certificates/generate` - Generate certificate
+- `POST /payment/initiate` - Initiate payment
+- `GET /payment/callback` - Payment callback
+
+### Webhook Routes
+- `POST /payment/webhook` - Flutterwave webhook
+
+## Testing
+
+Run the test suite:
 ```bash
-php artisan ssl:generate --interactive
+php artisan test
 ```
 
-#### With Options
-```bash
-php artisan ssl:generate \
-    --common-name=example.com \
-    --organization="My Company Inc." \
-    --country=US \
-    --state=California \
-    --locality=San Francisco \
-    --email=admin@example.com \
-    --valid-days=365 \
-    --key-size=2048 \
-    --private-key-password="securepassword123"
-```
+## Deployment
 
-#### Quick Generation
-```bash
-php artisan ssl:generate --common-name=localhost
-```
+1. **Production Environment**
+   - Set `APP_ENV=production`
+   - Set `APP_DEBUG=false`
+   - Use live Flutterwave credentials
 
-### API Endpoints
+2. **SSL Certificate**
+   - Install SSL certificate on your domain
+   - Update `APP_URL` to use HTTPS
 
-The application provides RESTful API endpoints for programmatic access:
+3. **Database**
+   - Use production database
+   - Set up database backups
 
-- `GET /ssl-certificates` - List all certificates
-- `POST /ssl-certificates/generate` - Generate new certificate
-- `GET /ssl-certificates/download` - Download certificate file
-- `GET /ssl-certificates/info` - Get certificate information
-- `DELETE /ssl-certificates/delete` - Delete certificate
-- `GET /ssl-certificates/content` - Get certificate content
-
-## Certificate Configuration
-
-### Required Fields
-
-- **Common Name (CN)**: The domain name for the certificate (e.g., `localhost`, `example.com`)
-- **Organization (O)**: Organization name
-- **Country (C)**: 2-letter ISO country code (e.g., `US`, `GB`)
-- **State/Province (ST)**: State or province name
-- **City/Locality (L)**: City or locality name
-- **Email**: Email address
-
-### Optional Fields
-
-- **Organizational Unit (OU)**: Department or unit within the organization
-- **Validity Period**: Number of days the certificate is valid (1-3650)
-- **Key Size**: RSA key size in bits (1024, 2048, or 4096)
-- **Private Key Password**: Password to encrypt the private key file (recommended for security)
-
-## Generated Files
-
-For each certificate, the following files are generated:
-
-1. **Private Key** (`private.key`) - The private key file (keep secure!)
-2. **Certificate** (`certificate.crt`) - The public certificate file
-3. **Combined PEM** (`combined.pem`) - Certificate and private key in one file
-4. **PFX/P12** (`certificate.pfx`) - PKCS#12 format for Windows/IIS
-
-## File Storage
-
-Certificates are stored in `storage/app/ssl_certificates/` with the following structure:
-
-```
-storage/app/ssl_certificates/
-├── domain_name_timestamp/
-│   ├── private.key
-│   ├── certificate.crt
-│   ├── combined.pem
-│   └── certificate.pfx
-```
-
-## Security Considerations
-
-⚠️ **Important Security Notes:**
-
-1. **Private Key Security**: Never share or expose your private key files
-2. **Password Protection**: Always use a strong password to encrypt private keys
-3. **Self-Signed Certificates**: These certificates are not trusted by browsers by default
-4. **Development Use**: Intended for development and testing environments only
-5. **Production**: Use certificates from trusted Certificate Authorities for production
-
-## Browser Trust
-
-To trust a self-signed certificate in your browser:
-
-### Chrome/Edge
-1. Navigate to `chrome://settings/certificates`
-2. Import the certificate file
-3. Trust it for websites
-
-### Firefox
-1. Navigate to `about:preferences#privacy`
-2. Click "View Certificates"
-3. Import the certificate and trust it
-
-### Safari
-1. Double-click the certificate file
-2. Add it to your login keychain
-3. Trust it for websites
+4. **Storage**
+   - Configure cloud storage if needed
+   - Set up proper file permissions
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **OpenSSL Extension Missing**
-   ```
-   Error: openssl_pkey_new(): OpenSSL extension is not available
-   ```
-   Solution: Enable the OpenSSL extension in your PHP configuration
+1. **Payment Not Processing**
+   - Check Flutterwave credentials
+   - Verify webhook configuration
+   - Check Laravel logs for errors
 
-2. **Permission Denied**
-   ```
-   Error: Failed to write certificate files
-   ```
-   Solution: Ensure write permissions on the `storage/app/` directory
+2. **Certificate Generation Fails**
+   - Ensure OpenSSL is installed
+   - Check storage permissions
+   - Verify domain name format
 
-3. **Invalid Certificate Configuration**
-   ```
-   Error: Validation failed
-   ```
-   Solution: Check that all required fields are provided and valid
+3. **File Download Issues**
+   - Check storage link is created
+   - Verify file permissions
+   - Check file paths in database
 
-### Debug Mode
+### Logs
 
-Enable debug mode in `.env`:
-```
-APP_DEBUG=true
+Check Laravel logs for debugging:
+```bash
+tail -f storage/logs/laravel.log
 ```
 
 ## Contributing
@@ -262,13 +316,23 @@ APP_DEBUG=true
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Add tests
 5. Submit a pull request
 
 ## License
 
-This project is open-sourced software licensed under the [MIT license](LICENSE).
+This project is licensed under the MIT License.
 
 ## Support
 
-For support and questions, please open an issue on the GitHub repository.
+For support, please contact us through the contact form on the website or email support@sslgen.com.
+
+## Changelog
+
+### v1.0.0
+- Initial release
+- User authentication
+- SSL certificate generation
+- Flutterwave payment integration
+- Multiple certificate formats
+- Responsive design

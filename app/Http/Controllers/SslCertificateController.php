@@ -22,7 +22,7 @@ class SslCertificateController extends Controller
      */
     public function index(): View
     {
-        $certificates = $this->sslService->listCertificates();
+        $certificates = $this->sslService->listCertificates(request()->user()->id);
         
         return view('ssl-certificates.index', compact('certificates'));
     }
@@ -55,7 +55,7 @@ class SslCertificateController extends Controller
         }
 
         try {
-            $result = $this->sslService->generateSelfSignedCertificate($config);
+            $result = $this->sslService->generateSelfSignedCertificate($config, $request->user()->id);
             
             return response()->json([
                 'success' => true,
@@ -123,7 +123,7 @@ class SslCertificateController extends Controller
      */
     public function list(): JsonResponse
     {
-        $certificates = $this->sslService->listCertificates();
+        $certificates = $this->sslService->listCertificates(request()->user()->id);
 
         return response()->json([
             'success' => true,

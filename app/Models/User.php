@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'user_type',
     ];
 
     /**
@@ -44,5 +45,37 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Check if user is a superadmin
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->user_type === 'superadmin';
+    }
+
+    /**
+     * Check if user is an admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->user_type === 'admin';
+    }
+
+    /**
+     * Check if user is a regular user
+     */
+    public function isUser(): bool
+    {
+        return $this->user_type === 'user';
+    }
+
+    /**
+     * Check if user has admin privileges (superadmin or admin)
+     */
+    public function hasAdminPrivileges(): bool
+    {
+        return in_array($this->user_type, ['superadmin', 'admin']);
     }
 }

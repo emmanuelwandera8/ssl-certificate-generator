@@ -11,9 +11,10 @@ class SslCertificateService
      * Generate a self-signed SSL certificate
      *
      * @param array $config Certificate configuration
+     * @param int|null $userId User ID to associate with the certificate
      * @return array Generated certificate files info
      */
-    public function generateSelfSignedCertificate(array $config = []): array
+    public function generateSelfSignedCertificate(array $config = [], ?int $userId = null): array
     {
         // Default configuration
         $defaultConfig = [
@@ -43,7 +44,7 @@ class SslCertificateService
         $certificate = $this->generateCertificate($privateKey, $csr, $config);
 
         // Save files
-        $files = $this->saveCertificateFiles($privateKey, $certificate, $config);
+        $files = $this->saveCertificateFiles($privateKey, $certificate, $config, $userId);
 
         return [
             'success' => true,
@@ -118,11 +119,12 @@ class SslCertificateService
      * @param array $config Certificate configuration
      * @return array
      */
-    private function saveCertificateFiles($privateKey, $certificate, array $config): array
+    private function saveCertificateFiles($privateKey, $certificate, array $config, ?int $userId = null): array
     {
         $timestamp = now()->format('Y-m-d_H-i-s');
         $commonName = Str::slug($config['common_name']);
-        $basePath = "ssl_certificates/{$commonName}_{$timestamp}";
+        $userPrefix = $userId ? "user_{$userId}" : "anonymous";
+        $basePath = "ssl_certificates/{$userPrefix}/{$commonName}_{$timestamp}";
 
         // Export private key with optional password protection
         $passphrase = $config['private_key_password'] ?? null;
@@ -245,14 +247,27 @@ class SslCertificateService
     }
 
     /**
-     * List all generated certificates
+     * List all generated certificates for a specific user
      *
+     * @param int|null $userId User ID to filter certificates
      * @return array
      */
-    public function listCertificates(): array
+    public function listCertificates(?int $userId = null): array
     {
         $certificates = [];
-        $directories = Storage::directories('ssl_certificates');
+        
+        if ($userId) {
+            // Only show certificates for the specific user
+            $userDirectory = "ssl_certificates/user_{$userId}";
+            if (Storage::exists($userDirectory)) {
+                $directories = Storage::directories($userDirectory);
+            } else {
+                $directories = [];
+            }
+        } else {
+            // Show all certificates (admin view)
+            $directories = Storage::directories('ssl_certificates');
+        }
 
         foreach ($directories as $directory) {
             $certificatePath = $directory . '/certificate.crt';
